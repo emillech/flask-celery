@@ -1,3 +1,4 @@
 flask
 celery
 sqlalchemy
+flask-sqlalchemy
