@@ -2,3 +2,4 @@ flask
 celery
 sqlalchemy
 flask-sqlalchemy
+requests
