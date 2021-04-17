@@ -20,14 +20,6 @@ celery = make_celery(app)
 db = SQLAlchemy(app)
 
 
-class Product(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True)
-
-    def __init__(self, name):
-        self.name = name
-
-
 class Car(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True)
@@ -40,61 +32,33 @@ class Car(db.Model):
 def index():
     req = requests.get('https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json')
     data = json.loads(req.content)
-
-    return jsonify(data['Results'][2]["Make_Name"])
-
-
-@app.route('/get_name/<car_name>', methods=['GET', 'POST'])
-def fetching_name(car_name):
-    return get_name(car_name)
+    return jsonify(data['Results'])
 
 
-@app.route('/insert_data', methods=['POST'])
-def insert():
-    return insert_product()
-
-
-@app.route('/process/<name>', methods=['GET', 'POST'])
-def process(name):
-    reverse.delay(name)
-    return 'I sent request'
-
-
-@celery.task(name='tasks.add')
-def insert_product():
-    name = request.json['name']
-
-    result = Product(name=name)
-    db.session.add(result)
-    db.session.commit()
+@app.route('/get_name', methods=['GET'])
+def fetching_name():
+    brand = request.args.get("brand")
+    get_name.delay(brand.upper())
     return 'done'
 
 
-@celery.task(name='tasks.reverse')
-def reverse(text):
-    return text[::-1]
-
-
 @celery.task(name='tasks.get_name')
-def get_name(car_name):
-    # car_name = request.json['car_name']
-    result = Car(name=car_name)
+def get_name(brand):
+    result = Car(name=brand)
     req = requests.get('https://vpic.nhtsa.dot.gov/api/vehicles/getallmakes?format=json')
     data = json.loads(req.content)
-    for i in range(500):
-
+    for i in range(len(data['Results'])):
         search = data['Results'][i]["Make_Name"]
-
-        if car_name in search:
+        if brand == search:
             try:
                 db.session.add(result)
                 db.session.commit()
-                return 'done'
+                return f'added {brand}'
             except exc.IntegrityError:
-                return 'duplicate'
-    return f'no name {car_name}'
+                return f'duplicate {brand}'
+    return f'no name {brand}'
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=9080)
+    app.run(debug=True, port=8080)
 
