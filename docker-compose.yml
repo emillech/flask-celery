@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  rabbitmq:
+    image: rabbitmq:3.8-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+  flask-app:
+    build: .
+    command: python tasks.py
+    ports:
+      - '5000:5000'
+  celery:
+    build: .
+    links:
+      - rabbitmq
+      - flask-app
+    command: celery -A tasks.celery worker --loglevel=info
+    depends_on:
+      - flask-app
+      - rabbitmq

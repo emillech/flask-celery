@@ -7,8 +7,9 @@ import requests
 import json
 
 
+SERVICE_NAME = 'rabbitmq'
 app = Flask(__name__)
-app.config['CELERY_BROKER_URL'] = 'amqp://localhost//'
+app.config['CELERY_BROKER_URL'] = f'amqp://guest:guest@{SERVICE_NAME}:5672/'
 app.config['CELERY_RESULT_BACKEND'] = 'db+sqlite:///db.sqlite3'
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -60,5 +61,5 @@ def get_name(brand):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8080)
+    app.run(debug=True, host='0.0.0.0')
 
