@@ -10,6 +10,8 @@ services:
     command: python tasks.py
     ports:
       - '5000:5000'
+    volumes:
+      - myapp:/app
   celery:
     build: .
     links:
@@ -19,3 +21,5 @@ services:
     depends_on:
       - flask-app
       - rabbitmq
+volumes:
+  myapp:
